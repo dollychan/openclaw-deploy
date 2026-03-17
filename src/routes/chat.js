@@ -68,6 +68,11 @@ export function createChatRouter(cfg) {
  * @returns {Promise<string>} agentId
  */
 async function getOrProvisionAgent(visitorId, cfg) {
+  // single 模式：直接使用固定 agent，每个访客创建独立 session
+  if (cfg.agentMode === 'single') {
+    return { agentId: cfg.singleAgentId, isNew: false };
+  }
+
   // 快路径：已有 Agent，直接返回
   const existing = agentRegistry.get(visitorId);
   if (existing) return { agentId: existing, isNew: false };

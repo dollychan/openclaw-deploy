@@ -111,7 +111,10 @@ app.listen(cfg.port, () => {
   console.log('─'.repeat(40));
   console.log(`  ✅ Listening on  http://localhost:${cfg.port}`);
   console.log(`  🔗 OpenClaw at   ${cfg.openclawBaseUrl}`);
-  console.log(`  📁 Workspaces    ${cfg.openclawWorkspacesDir}`);
+  console.log(`  🤖 Agent mode    ${cfg.agentMode}${cfg.agentMode === 'single' ? ` (agent: ${cfg.singleAgentId})` : ''}`);
+  if (cfg.agentMode === 'multi') {
+    console.log(`  📁 Workspaces    ${cfg.openclawWorkspacesDir}`);
+  }
   console.log(`  🌍 Base URL      ${cfg.baseUrl}`);
   console.log(`  🔒 Environment   ${cfg.nodeEnv}`);
   console.log('─'.repeat(40));

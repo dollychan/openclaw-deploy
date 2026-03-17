@@ -15,14 +15,18 @@ const PROJECT_ROOT = resolve(__dirname, '..');
  * @returns {object} 冻结的配置对象
  */
 export function loadConfig() {
+  const agentMode = process.env.AGENT_MODE ?? 'multi';
+  if (agentMode !== 'single' && agentMode !== 'multi') {
+    throw new Error(`AGENT_MODE must be 'single' or 'multi', got: ${agentMode}`);
+  }
+
   // ── 必填项验证 ─────────────────────────────────────────────────────────────
-  const required = [
-    'OPENCLAW_TOKEN',
-    'OPENCLAW_CONFIG_PATH',
-    'OPENCLAW_WORKSPACES_DIR',
-    'HMAC_SECRET',
-    'COOKIE_SECRET',
-  ];
+  const required = ['OPENCLAW_TOKEN', 'HMAC_SECRET', 'COOKIE_SECRET'];
+
+  // multi 模式需要文件系统路径（用于 agent 动态创建）
+  if (agentMode === 'multi') {
+    required.push('OPENCLAW_CONFIG_PATH', 'OPENCLAW_WORKSPACES_DIR');
+  }
 
   const missing = required.filter((key) => !process.env[key]);
   if (missing.length > 0) {
@@ -37,15 +41,22 @@ export function loadConfig() {
     throw new Error('HMAC_SECRET must be at least 32 characters long for security.');
   }
 
+  const configPath = process.env.OPENCLAW_CONFIG_PATH;
+
   const cfg = {
     // OpenClaw 连接
     openclawBaseUrl: process.env.OPENCLAW_BASE_URL ?? 'http://localhost:18789',
     openclawToken: process.env.OPENCLAW_TOKEN,
 
-    // 文件系统路径
-    openclawConfigPath: resolve(process.env.OPENCLAW_CONFIG_PATH),
-    openclawWorkspacesDir: resolve(process.env.OPENCLAW_WORKSPACES_DIR),
-    openclawAgentsDir: resolve(process.env.OPENCLAW_AGENTS_DIR ?? join(dirname(resolve(process.env.OPENCLAW_CONFIG_PATH)), 'agents')),
+    // Agent 模式
+    agentMode,
+    // single 模式：所有访客共用同一个 agent，每个连接创建独立 session
+    singleAgentId: process.env.SINGLE_AGENT_ID ?? 'main',
+
+    // 文件系统路径（multi 模式必填）
+    openclawConfigPath: configPath ? resolve(configPath) : null,
+    openclawWorkspacesDir: process.env.OPENCLAW_WORKSPACES_DIR ? resolve(process.env.OPENCLAW_WORKSPACES_DIR) : null,
+    openclawAgentsDir: resolve(process.env.OPENCLAW_AGENTS_DIR ?? (configPath ? join(dirname(resolve(configPath)), 'agents') : '')),
     templateDir: resolve(process.env.TEMPLATE_DIR ?? join(PROJECT_ROOT, 'templates')),
     registryPath: resolve(process.env.REGISTRY_PATH ?? join(PROJECT_ROOT, 'data', 'registry.json')),
 

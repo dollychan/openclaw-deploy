@@ -1,0 +1,23 @@
+{
+  "name": "openclaw-web-widget",
+  "version": "1.0.0",
+  "description": "Per-user OpenClaw agent provisioning with embeddable chat widget",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "json5": "^2.2.3",
+    "uuid": "^11.1.0"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

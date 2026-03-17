@@ -1,0 +1,7 @@
+node_modules/
+.env
+data/registry.json
+*.tmp
+*.log
+.DS_Store
+.claude/

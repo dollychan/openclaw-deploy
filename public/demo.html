@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenClaw Widget 演示</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      max-width: 640px;
+      padding: 48px 32px;
+      text-align: center;
+    }
+    h1 { font-size: 32px; font-weight: 700; margin-bottom: 12px; color: #0f172a; }
+    p { font-size: 16px; color: #64748b; line-height: 1.6; margin-bottom: 24px; }
+    .embed-code {
+      background: #1e293b;
+      color: #e2e8f0;
+      border-radius: 10px;
+      padding: 16px 20px;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 13px;
+      text-align: left;
+      line-height: 1.6;
+    }
+    .hint { font-size: 14px; color: #94a3b8; margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🤖 OpenClaw Widget</h1>
+    <p>
+      右下角的聊天气泡就是 Widget。<br>
+      每位访客都拥有专属的 AI 助手，记忆和人设完全隔离。
+    </p>
+    <div class="embed-code">
+&lt;!-- 将此代码嵌入你的网页 --&gt;<br>
+&lt;script<br>
+&nbsp;&nbsp;src="https://yourserver.com/widget.js"<br>
+&nbsp;&nbsp;data-title="我的助手"<br>
+&nbsp;&nbsp;data-color="#6366f1"<br>
+&nbsp;&nbsp;data-welcome="你好！有什么我可以帮你的吗？"<br>
+&gt;&lt;/script&gt;
+    </div>
+    <p class="hint">点击右下角气泡开始对话 👇</p>
+  </div>
+
+  <!-- Widget 嵌入（开发时直接引用本地） -->
+  <script
+    src="/widget.js"
+    data-title="专属助手"
+    data-color="#6366f1"
+    data-welcome="你好！我是你的专属 AI 助手，我会记住我们的每次对话 😊">
+  </script>
+</body>
+</html>

@@ -11,7 +11,6 @@
 import { Router } from 'express';
 import * as taskManager from '../services/taskManager.js';
 import * as agentRegistry from '../services/agentRegistry.js';
-import * as visitorProfile from '../services/visitorProfile.js';
 import * as cronManager from '../services/cronManager.js';
 
 // 合法的 cron 表达式格式（简单校验：5段，每段允许数字/*/,-）
@@ -104,15 +103,9 @@ export function createTasksRouter() {
       return res.status(400).json({ error: 'No agent provisioned yet. Please send a chat message first.' });
     }
 
-    // 前置检查：飞书账号已绑定
-    const profile = visitorProfile.get(req.visitorId);
-    if (!profile.feishuAccountId) {
-      return res.status(400).json({ error: 'Feishu account not connected. Please set up Feishu first.' });
-    }
-
     inFlight.add(taskId);
     try {
-      await cronManager.addCron(agentId, task, profile.feishuAccountId);
+      await cronManager.addCron(agentId, task);
       const updated = taskManager.update(req.visitorId, taskId, { enabled: true, cronJobId: task.id });
       res.json({ task: updated });
     } catch (err) {

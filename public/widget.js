@@ -203,42 +203,6 @@
     .task-toggle input:checked ~ .task-toggle-thumb { transform: translateX(14px); }
     .task-toggle input:disabled ~ .task-toggle-track { opacity: 0.4; cursor: not-allowed; }
 
-    /* 飞书设置区 */
-    #feishu-section {
-      border-bottom: 1px solid #e2e8f0;
-      padding: 10px 12px;
-      background: #f8fafc;
-      flex-shrink: 0;
-    }
-    #feishu-section.connected { background: #f0fdf4; }
-    .feishu-label { font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
-    .feishu-status-dot { width: 7px; height: 7px; border-radius: 50%; background: #cbd5e1; flex-shrink: 0; }
-    .feishu-status-dot.on { background: #22c55e; }
-    .feishu-input-row { display: flex; gap: 6px; }
-    #feishu-id-input {
-      flex: 1;
-      border: 1.5px solid #e2e8f0;
-      border-radius: 7px;
-      padding: 5px 9px;
-      font-size: 12px;
-      font-family: inherit;
-      outline: none;
-      color: #1e293b;
-    }
-    #feishu-id-input:focus { border-color: ${themeColor}; }
-    #feishu-save-btn, #feishu-disconnect-btn {
-      border: none;
-      border-radius: 7px;
-      padding: 5px 10px;
-      font-size: 12px;
-      cursor: pointer;
-      font-weight: 500;
-    }
-    #feishu-save-btn { background: ${themeColor}; color: #fff; }
-    #feishu-save-btn:hover { opacity: 0.88; }
-    #feishu-disconnect-btn { background: #fee2e2; color: #dc2626; }
-    #feishu-disconnect-btn:hover { background: #fecaca; }
-
     /* 新建任务表单 */
     #task-form {
       border-top: 1px solid #e2e8f0;
@@ -402,20 +366,6 @@
         </div>
       </div>
       <div id="tasks-panel" class="hidden">
-        <div id="feishu-section">
-          <div class="feishu-label">
-            <span class="feishu-status-dot" id="feishu-dot"></span>
-            <span id="feishu-label-text">Feishu Account</span>
-          </div>
-          <div id="feishu-setup-row" class="feishu-input-row">
-            <input id="feishu-id-input" type="text" placeholder="Feishu user / open ID" maxlength="200" />
-            <button id="feishu-save-btn">Connect</button>
-          </div>
-          <div id="feishu-connected-row" class="feishu-input-row" style="display:none">
-            <span style="font-size:12px;color:#15803d;flex:1" id="feishu-connected-text"></span>
-            <button id="feishu-disconnect-btn">Disconnect</button>
-          </div>
-        </div>
         <div id="tasks-list"></div>
         <div id="task-form">
           <input id="task-name" type="text" placeholder="Task name" maxlength="100" />
@@ -448,22 +398,11 @@
   const taskSchedule = shadow.getElementById('task-schedule');
   const taskMessage = shadow.getElementById('task-message');
   const taskSubmit = shadow.getElementById('task-submit');
-  const feishuSection = shadow.getElementById('feishu-section');
-  const feishuDot = shadow.getElementById('feishu-dot');
-  const feishuLabelText = shadow.getElementById('feishu-label-text');
-  const feishuSetupRow = shadow.getElementById('feishu-setup-row');
-  const feishuConnectedRow = shadow.getElementById('feishu-connected-row');
-  const feishuIdInput = shadow.getElementById('feishu-id-input');
-  const feishuSaveBtn = shadow.getElementById('feishu-save-btn');
-  const feishuDisconnectBtn = shadow.getElementById('feishu-disconnect-btn');
-  const feishuConnectedText = shadow.getElementById('feishu-connected-text');
-
   // ── 状态 ────────────────────────────────────────────────────────────────────
   let isOpen = false;
   let isSending = false;
   let isInitialized = false;
   let showingTasks = false;
-  let feishuConnected = false;
 
   // ── 面板开关 ────────────────────────────────────────────────────────────────
   function togglePanel() {
@@ -491,16 +430,9 @@
   // ── 加载并渲染任务列表 ─────────────────────────────────────────────────────
   async function loadTasks() {
     try {
-      const [tasksRes, sessionRes] = await Promise.all([
-        fetch(`${apiBase}/api/tasks`, { credentials: 'include' }),
-        fetch(`${apiBase}/api/session`, { credentials: 'include' }),
-      ]);
-      if (sessionRes.ok) {
-        const data = await sessionRes.json();
-        setFeishuState(data.feishuConnected, data.feishuAccountId);
-      }
-      if (!tasksRes.ok) return;
-      const { tasks } = await tasksRes.json();
+      const res = await fetch(`${apiBase}/api/tasks`, { credentials: 'include' });
+      if (!res.ok) return;
+      const { tasks } = await res.json();
       renderTasks(tasks);
     } catch { /* ignore */ }
   }
@@ -539,7 +471,7 @@
       checkbox.type = 'checkbox';
       checkbox.checked = task.enabled;
       // disable the toggle when Feishu is not connected and task is not yet enabled
-      checkbox.disabled = !feishuConnected && !task.enabled;
+      checkbox.disabled = false;
       checkbox.addEventListener('change', (e) => toggleTask(task.id, e.target.checked));
       const track = document.createElement('span');
       track.className = 'task-toggle-track';
@@ -621,69 +553,12 @@
   async function init() {
     isInitialized = true;
     try {
-      const res = await fetch(`${apiBase}/api/session`, { credentials: 'include' });
-      if (res.ok) {
-        const data = await res.json();
-        setFeishuState(data.feishuConnected, data.feishuAccountId);
-      }
-      // 展示欢迎语
+      await fetch(`${apiBase}/api/session`, { credentials: 'include' });
       appendMessage('assistant', welcomeMsg);
     } catch {
       appendMessage('error', 'Unable to connect to assistant. Please refresh the page.');
     }
   }
-
-  // ── 飞书连接状态更新 ────────────────────────────────────────────────────────
-  function setFeishuState(connected, accountId) {
-    feishuConnected = Boolean(connected);
-    feishuDot.classList.toggle('on', feishuConnected);
-    if (feishuConnected) {
-      feishuSection.classList.add('connected');
-      feishuLabelText.textContent = 'Feishu Account';
-      feishuSetupRow.style.display = 'none';
-      feishuConnectedRow.style.display = '';
-      feishuConnectedText.textContent = accountId
-        ? `Connected: ${accountId.length > 20 ? accountId.slice(0, 20) + '…' : accountId}`
-        : 'Connected';
-    } else {
-      feishuSection.classList.remove('connected');
-      feishuLabelText.textContent = 'Feishu Account (required for tasks)';
-      feishuSetupRow.style.display = '';
-      feishuConnectedRow.style.display = 'none';
-      feishuIdInput.value = '';
-    }
-  }
-
-  feishuSaveBtn.addEventListener('click', async () => {
-    const id = feishuIdInput.value.trim();
-    if (!id) return;
-    feishuSaveBtn.disabled = true;
-    try {
-      const res = await fetch(`${apiBase}/api/session/feishu`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ feishuAccountId: id }),
-      });
-      if (res.ok) {
-        setFeishuState(true, id);
-        if (showingTasks) loadTasks();
-      }
-    } catch { /* ignore */ } finally {
-      feishuSaveBtn.disabled = false;
-    }
-  });
-
-  feishuDisconnectBtn.addEventListener('click', async () => {
-    try {
-      await fetch(`${apiBase}/api/session/feishu`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-      setFeishuState(false, null);
-      if (showingTasks) loadTasks();
-    } catch { /* ignore */ }
-  });
 
   // ── 追加消息气泡 ────────────────────────────────────────────────────────────
   function appendMessage(role, text) {

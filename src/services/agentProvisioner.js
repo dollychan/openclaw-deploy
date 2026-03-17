@@ -58,10 +58,6 @@ export async function provisionAgent(visitorId, cfg) {
         name: 'Assistant',
         emoji: '🤖',
       },
-      sandbox: {
-        mode: 'all',
-        workspaceAccess: 'rw',
-      },
       tools: {
         deny: ['exec', 'bash', 'computer'],
       },

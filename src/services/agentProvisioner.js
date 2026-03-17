@@ -28,10 +28,13 @@ export async function provisionAgent(visitorId, cfg) {
   const workspacePath = resolve(join(cfg.openclawWorkspacesDir, agentId));
   const templateDir = resolve(cfg.templateDir);
 
+  const agentDir = resolve(join(cfg.openclawWorkspacesDir, '..', 'agents', agentId, 'agent'));
+
   console.log(`[provisioner] Creating agent ${agentId} for visitor ${visitorId.slice(0, 12)}...`);
 
-  // ── 步骤 1：创建 workspace 目录 ────────────────────────────────────────────
+  // ── 步骤 1：创建 workspace 和 agentDir 目录 ────────────────────────────────
   await mkdir(workspacePath, { recursive: true });
+  await mkdir(agentDir, { recursive: true });
 
   // ── 步骤 2：从模板目录复制人设文件 ────────────────────────────────────────
   await copyTemplateFiles(templateDir, workspacePath);
@@ -41,6 +44,7 @@ export async function provisionAgent(visitorId, cfg) {
     config.agents.list.push({
       id: agentId,
       workspace: workspacePath,
+      agentDir,
       identity: {
         name: 'Assistant',
         emoji: '🤖',

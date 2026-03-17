@@ -29,7 +29,7 @@ export async function provisionAgent(visitorId, cfg) {
   const workspacePath = resolve(join(cfg.openclawWorkspacesDir, agentId));
   const templateDir = resolve(cfg.templateDir);
 
-  const agentDir = resolve(join(cfg.openclawWorkspacesDir, '..', 'agents', agentId, 'agent'));
+  const agentDir = join(cfg.openclawAgentsDir, agentId, 'agent');
 
   console.log(`[provisioner] Creating agent ${agentId} for visitor ${visitorId.slice(0, 12)}...`);
 
@@ -83,12 +83,14 @@ export async function provisionAgent(visitorId, cfg) {
  * @param {string} workspacePath - 目标 workspace 路径
  */
 async function copyTemplateFiles(templateDir, workspacePath) {
-  let files;
+  let entries;
   try {
-    files = await readdir(templateDir);
+    entries = await readdir(templateDir, { withFileTypes: true });
   } catch {
     throw new Error(`Template directory not found: ${templateDir}. Please create it with SOUL.md, USER.md, AGENTS.md, IDENTITY.md.`);
   }
+
+  const files = entries.filter((e) => e.isFile()).map((e) => e.name);
 
   if (files.length === 0) {
     throw new Error(`Template directory is empty: ${templateDir}`);

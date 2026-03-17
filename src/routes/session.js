@@ -22,10 +22,8 @@ export function createSessionRouter(cfg) {
     const agentId = agentRegistry.get(visitorId);
 
     res.json({
-      // 不暴露完整 visitorId，前端只需知道它的存在
-      visitorKey: visitorId.slice(0, 8), // 仅前 8 位，用于 UI 显示
+      visitorKey: visitorId.slice(0, 8),
       agentProvisioned: agentId !== null,
-      totalAgents: agentRegistry.size(),
     });
   });
 

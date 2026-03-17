@@ -27,13 +27,19 @@ export async function streamResponse({ agentId, visitorId, message, cfg, req, re
   // 告知 nginx 禁用响应缓冲，确保每个 token 即时到达浏览器
   res.setHeader('X-Accel-Buffering', 'no');
 
-  // ── AbortController：客户端断开时中止上游 fetch ────────────────────────────
+  // ── AbortController：客户端断开或超时时中止上游 fetch ─────────────────────
   const controller = new AbortController();
   const onClientClose = () => {
     controller.abort();
     console.log(`[proxy] Client disconnected for visitor ${visitorId.slice(0, 12)}, aborting upstream.`);
   };
   req.on('close', onClientClose);
+
+  // 服务端超时：60 秒内上游无响应则主动中止
+  const serverTimeout = setTimeout(() => {
+    controller.abort();
+    console.warn(`[proxy] Upstream timeout for visitor ${visitorId.slice(0, 12)}`);
+  }, 60_000);
 
   try {
     // ── 构造请求到 OpenClaw /v1/responses ──────────────────────────────────
@@ -113,6 +119,7 @@ export async function streamResponse({ agentId, visitorId, message, cfg, req, re
       res.end();
     }
   } finally {
+    clearTimeout(serverTimeout);
     req.off('close', onClientClose);
   }
 }

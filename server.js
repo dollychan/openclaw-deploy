@@ -50,7 +50,7 @@ app.use((req, res, next) => {
 
   if (origin) {
     // 有 Origin 头（浏览器跨域请求）：严格校验来源
-    const isAllowed = cfg.nodeEnv === 'development' || origin === allowedOrigin;
+    const isAllowed = origin === allowedOrigin;
     if (isAllowed) {
       res.setHeader('Access-Control-Allow-Origin', origin);
       res.setHeader('Access-Control-Allow-Credentials', 'true');

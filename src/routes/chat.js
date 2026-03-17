@@ -49,8 +49,8 @@ export function createChatRouter(cfg) {
       if (!res.headersSent) {
         res.status(500).json({ error: 'Failed to process your message. Please try again.' });
       } else if (!res.writableEnded) {
-        // SSE 已开始，发送 error 事件后关闭
-        res.write(`event: error\ndata: ${JSON.stringify({ error: err.message })}\n\n`);
+        // SSE 已开始，发送 error 事件后关闭（不暴露内部错误详情）
+        res.write(`event: error\ndata: ${JSON.stringify({ error: 'Failed to process your message. Please try again.' })}\n\n`);
         res.end();
       }
     }
@@ -128,6 +128,7 @@ async function checkAgentReady(agentId, cfg) {
   try {
     const res = await fetch(`${cfg.openclawBaseUrl}/v1/agents/${agentId}`, {
       headers: { 'Authorization': `Bearer ${cfg.openclawToken}` },
+      signal: AbortSignal.timeout(5000),
     });
     return res.ok;
   } catch {

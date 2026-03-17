@@ -211,24 +211,31 @@
   shadow.appendChild(style);
 
   // ── DOM 构建 ────────────────────────────────────────────────────────────────
+  // 注意：动态值（title、placeholder）通过 setAttribute/textContent 设置，
+  // 避免直接拼入 innerHTML 导致 XSS。
   shadow.innerHTML += `
     <button id="bubble" title="Open chat" aria-label="Open assistant chat">
       <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
     </button>
-    <div id="panel" class="hidden" role="dialog" aria-label="${title}">
+    <div id="panel" class="hidden" role="dialog">
       <div id="header">
-        <span id="header-title">${title}</span>
+        <span id="header-title"></span>
         <button id="close-btn" aria-label="Close chat">×</button>
       </div>
       <div id="messages" role="log" aria-live="polite"></div>
       <div id="input-row">
-        <textarea id="input" rows="1" placeholder="${placeholder}" aria-label="Message input"></textarea>
+        <textarea id="input" rows="1" aria-label="Message input"></textarea>
         <button id="send-btn" aria-label="Send message">
           <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
         </button>
       </div>
     </div>
   `;
+
+  // 动态值通过 DOM API 安全设置
+  shadow.getElementById('panel').setAttribute('aria-label', title);
+  shadow.getElementById('header-title').textContent = title;
+  shadow.getElementById('input').setAttribute('placeholder', placeholder);
 
   // ── 获取 DOM 元素 ──────────────────────────────────────────────────────────
   const bubble = shadow.getElementById('bubble');

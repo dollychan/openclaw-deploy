@@ -37,10 +37,10 @@ export function createChatRouter(cfg) {
 
     try {
       // ── 获取或创建专属 Agent ───────────────────────────────────────────────
-      const agentId = await getOrProvisionAgent(visitorId, cfg);
+      const { agentId, isNew } = await getOrProvisionAgent(visitorId, cfg);
 
-      // ── 代理 SSE 流 ────────────────────────────────────────────────────────
-      await streamResponse({ agentId, visitorId, message, cfg, req, res });
+      // ── 代理 SSE 流（新 Agent 需等待 OpenClaw 热重载）─────────────────────
+      await streamResponseWithRetry({ agentId, visitorId, message, cfg, req, res, isNew });
 
     } catch (err) {
       console.error(`[chat] Error for visitor ${visitorId.slice(0, 12)}:`, err.message);
@@ -70,22 +70,67 @@ export function createChatRouter(cfg) {
 async function getOrProvisionAgent(visitorId, cfg) {
   // 快路径：已有 Agent，直接返回
   const existing = agentRegistry.get(visitorId);
-  if (existing) return existing;
+  if (existing) return { agentId: existing, isNew: false };
 
   // 防并发：若已有进行中的 provision，等待它完成
   if (provisioningMap.has(visitorId)) {
     console.log(`[chat] Waiting for in-flight provision for visitor ${visitorId.slice(0, 12)}...`);
-    return provisioningMap.get(visitorId);
+    const agentId = await provisioningMap.get(visitorId);
+    return { agentId, isNew: true };
   }
 
   // 慢路径：启动新的 provision 流程
   const provisionPromise = provisionAgent(visitorId, cfg)
     .finally(() => {
-      // 无论成功或失败，清理 Map 中的 Promise
       provisioningMap.delete(visitorId);
     });
 
   provisioningMap.set(visitorId, provisionPromise);
 
-  return provisionPromise;
+  const agentId = await provisionPromise;
+  return { agentId, isNew: true };
+}
+
+/**
+ * 新 Agent 首次使用时，OpenClaw 热重载可能需要 1-2 秒。
+ * 若收到 404，自动重试，最多等待 10 秒。
+ */
+async function streamResponseWithRetry({ agentId, visitorId, message, cfg, req, res, isNew }) {
+  if (!isNew) {
+    return streamResponse({ agentId, visitorId, message, cfg, req, res });
+  }
+
+  const maxAttempts = 5;
+  const retryDelayMs = 2000;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    // 检查 agent 是否已就绪
+    const ready = await checkAgentReady(agentId, cfg);
+    if (ready) break;
+
+    if (attempt === maxAttempts) {
+      console.error(`[chat] Agent ${agentId} not ready after ${maxAttempts} attempts`);
+      res.status(503).json({ error: 'Agent is starting up, please try again in a moment.' });
+      return;
+    }
+
+    console.log(`[chat] Agent ${agentId} not ready yet, retrying in ${retryDelayMs}ms (attempt ${attempt}/${maxAttempts})...`);
+    await new Promise((r) => setTimeout(r, retryDelayMs));
+  }
+
+  return streamResponse({ agentId, visitorId, message, cfg, req, res });
+}
+
+/**
+ * 通过健康检查确认 agent 已被 OpenClaw 加载
+ */
+async function checkAgentReady(agentId, cfg) {
+  try {
+    const res = await fetch(`${cfg.openclawBaseUrl}/v1/agents/${agentId}`, {
+      headers: { 'Authorization': `Bearer ${cfg.openclawToken}` },
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
 }

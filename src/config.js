@@ -4,9 +4,8 @@
  * 导出冻结的配置对象，防止运行时意外修改
  */
 
-import { resolve } from 'node:path';
+import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { dirname } from 'node:path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = resolve(__dirname, '..');
@@ -46,6 +45,7 @@ export function loadConfig() {
     // 文件系统路径
     openclawConfigPath: resolve(process.env.OPENCLAW_CONFIG_PATH),
     openclawWorkspacesDir: resolve(process.env.OPENCLAW_WORKSPACES_DIR),
+    openclawAgentsDir: resolve(process.env.OPENCLAW_AGENTS_DIR ?? join(dirname(resolve(process.env.OPENCLAW_CONFIG_PATH)), 'agents')),
     templateDir: resolve(process.env.TEMPLATE_DIR ?? join(PROJECT_ROOT, 'templates')),
     registryPath: resolve(process.env.REGISTRY_PATH ?? join(PROJECT_ROOT, 'data', 'registry.json')),
 

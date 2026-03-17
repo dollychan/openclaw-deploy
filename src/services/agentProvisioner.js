@@ -12,6 +12,7 @@
  */
 
 import { mkdir, copyFile, readdir } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { generateAgentId } from '../utils/idGen.js';
 import { updateConfig } from './configManager.js';
@@ -35,6 +36,14 @@ export async function provisionAgent(visitorId, cfg) {
   // ── 步骤 1：创建 workspace 和 agentDir 目录 ────────────────────────────────
   await mkdir(workspacePath, { recursive: true });
   await mkdir(agentDir, { recursive: true });
+  await mkdir(join(cfg.openclawAgentsDir, agentId, 'sessions'), { recursive: true });
+
+  // 从 main agent 复制 models.json（包含 provider 配置）
+  const mainModelsJson = join(cfg.openclawAgentsDir, 'main', 'agent', 'models.json');
+  const visitorModelsJson = join(agentDir, 'models.json');
+  if (existsSync(mainModelsJson)) {
+    await copyFile(mainModelsJson, visitorModelsJson);
+  }
 
   // ── 步骤 2：从模板目录复制人设文件 ────────────────────────────────────────
   await copyTemplateFiles(templateDir, workspacePath);

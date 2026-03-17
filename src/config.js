@@ -49,6 +49,7 @@ export function loadConfig() {
     templateDir: resolve(process.env.TEMPLATE_DIR ?? join(PROJECT_ROOT, 'templates')),
     registryPath: resolve(process.env.REGISTRY_PATH ?? join(PROJECT_ROOT, 'data', 'registry.json')),
     tasksPath: resolve(process.env.TASKS_PATH ?? join(PROJECT_ROOT, 'data', 'tasks.json')),
+    profilesPath: resolve(process.env.PROFILES_PATH ?? join(PROJECT_ROOT, 'data', 'profiles.json')),
 
     // Web 服务
     port: parseInt(process.env.PORT ?? '3000', 10),

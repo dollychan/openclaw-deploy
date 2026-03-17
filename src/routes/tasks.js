@@ -1,16 +1,24 @@
 /**
  * /api/tasks
  *
- * GET    /api/tasks           - 获取当前访客的所有定时任务
- * POST   /api/tasks           - 创建定时任务
- * DELETE /api/tasks/:taskId   - 删除定时任务
+ * GET    /api/tasks                    - 获取当前访客的所有定时任务
+ * POST   /api/tasks                    - 创建定时任务
+ * DELETE /api/tasks/:taskId            - 删除定时任务
+ * POST   /api/tasks/:taskId/enable     - 启用任务（注册 OpenClaw cron）
+ * POST   /api/tasks/:taskId/disable    - 停用任务（删除 OpenClaw cron）
  */
 
 import { Router } from 'express';
 import * as taskManager from '../services/taskManager.js';
+import * as agentRegistry from '../services/agentRegistry.js';
+import * as visitorProfile from '../services/visitorProfile.js';
+import * as cronManager from '../services/cronManager.js';
 
 // 合法的 cron 表达式格式（简单校验：5段，每段允许数字/*/,-）
 const CRON_RE = /^(\S+\s){4}\S+$/;
+
+// 正在处理中的任务 ID 集合，防止并发 enable/disable 导致重复注册 cron
+const inFlight = new Set();
 
 export function createTasksRouter() {
   const router = Router();
@@ -49,16 +57,103 @@ export function createTasksRouter() {
     res.status(201).json({ task });
   });
 
-  // 删除任务
-  router.delete('/:taskId', (req, res) => {
+  // 删除任务（若已启用则同时删除 cron）
+  router.delete('/:taskId', async (req, res) => {
     const { taskId } = req.params;
-    const deleted = taskManager.remove(req.visitorId, taskId);
+    const tasks = taskManager.list(req.visitorId);
+    const task = tasks.find((t) => t.id === taskId);
 
-    if (!deleted) {
+    if (!task) {
       return res.status(404).json({ error: 'Task not found' });
     }
 
+    // 若已启用，先删除 cron
+    if (task.enabled && task.cronJobId) {
+      try {
+        await cronManager.deleteCron(task.cronJobId);
+      } catch (err) {
+        console.warn(`[tasks] Failed to delete cron on task removal: ${err.message}`);
+      }
+    }
+
+    taskManager.remove(req.visitorId, taskId);
     res.json({ ok: true });
+  });
+
+  // 启用任务
+  router.post('/:taskId/enable', async (req, res) => {
+    const { taskId } = req.params;
+
+    if (inFlight.has(taskId)) {
+      return res.status(409).json({ error: 'Task is already being updated. Please wait.' });
+    }
+
+    const tasks = taskManager.list(req.visitorId);
+    const task = tasks.find((t) => t.id === taskId);
+
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    if (task.enabled) {
+      return res.json({ task });
+    }
+
+    // 前置检查：访客必须已有专属 agent
+    const agentId = agentRegistry.get(req.visitorId);
+    if (!agentId) {
+      return res.status(400).json({ error: 'No agent provisioned yet. Please send a chat message first.' });
+    }
+
+    // 前置检查：飞书账号已绑定
+    const profile = visitorProfile.get(req.visitorId);
+    if (!profile.feishuAccountId) {
+      return res.status(400).json({ error: 'Feishu account not connected. Please set up Feishu first.' });
+    }
+
+    inFlight.add(taskId);
+    try {
+      await cronManager.addCron(agentId, task, profile.feishuAccountId);
+      const updated = taskManager.update(req.visitorId, taskId, { enabled: true, cronJobId: task.id });
+      res.json({ task: updated });
+    } catch (err) {
+      console.error(`[tasks] Enable task failed: ${err.message}`);
+      res.status(500).json({ error: 'Failed to register cron job. Please try again.' });
+    } finally {
+      inFlight.delete(taskId);
+    }
+  });
+
+  // 停用任务
+  router.post('/:taskId/disable', async (req, res) => {
+    const { taskId } = req.params;
+
+    if (inFlight.has(taskId)) {
+      return res.status(409).json({ error: 'Task is already being updated. Please wait.' });
+    }
+
+    const tasks = taskManager.list(req.visitorId);
+    const task = tasks.find((t) => t.id === taskId);
+
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    if (!task.enabled) {
+      return res.json({ task });
+    }
+
+    inFlight.add(taskId);
+    try {
+      if (task.cronJobId) {
+        await cronManager.deleteCron(task.cronJobId);
+      }
+      const updated = taskManager.update(req.visitorId, taskId, { enabled: false, cronJobId: null });
+      res.json({ task: updated });
+    } catch (err) {
+      console.error(`[tasks] Disable task failed: ${err.message}`);
+      res.status(500).json({ error: 'Failed to remove cron job. Please try again.' });
+    } finally {
+      inFlight.delete(taskId);
+    }
   });
 
   return router;

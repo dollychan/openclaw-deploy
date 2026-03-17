@@ -36,9 +36,8 @@ export async function provisionAgent(visitorId, cfg) {
   // ── 步骤 2：从模板目录复制人设文件 ────────────────────────────────────────
   await copyTemplateFiles(templateDir, workspacePath);
 
-  // ── 步骤 3：更新 openclaw.json（注册 Agent + Binding）─────────────────────
+  // ── 步骤 3：更新 openclaw.json（注册 Agent）──────────────────────────────
   await updateConfig((config) => {
-    // 注册 Agent
     config.agents.list.push({
       id: agentId,
       workspace: workspacePath,
@@ -46,22 +45,12 @@ export async function provisionAgent(visitorId, cfg) {
         name: 'Assistant',
         emoji: '🤖',
       },
-      // 沙箱设置：允许读写 workspace，禁止执行外部命令
       sandbox: {
         mode: 'all',
         workspaceAccess: 'rw',
       },
       tools: {
         deny: ['exec', 'bash', 'computer'],
-      },
-    });
-
-    // 添加路由 Binding：将来自该访客的消息路由到专属 Agent
-    // 注意：bindings 按"最先匹配"顺序，peer 精确匹配优先级最高
-    config.bindings.unshift({
-      agentId,
-      match: {
-        peer: `web:${visitorId}`,
       },
     });
   }, cfg.openclawConfigPath);

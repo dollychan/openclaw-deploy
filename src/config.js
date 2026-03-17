@@ -45,7 +45,6 @@ export function loadConfig() {
     // 文件系统路径
     openclawConfigPath: resolve(process.env.OPENCLAW_CONFIG_PATH),
     openclawWorkspacesDir: resolve(process.env.OPENCLAW_WORKSPACES_DIR),
-    openclawAgentsDir: resolve(process.env.OPENCLAW_AGENTS_DIR ?? join(dirname(resolve(process.env.OPENCLAW_CONFIG_PATH)), 'agents')),
     templateDir: resolve(process.env.TEMPLATE_DIR ?? join(PROJECT_ROOT, 'templates')),
     registryPath: resolve(process.env.REGISTRY_PATH ?? join(PROJECT_ROOT, 'data', 'registry.json')),
     tasksPath: resolve(process.env.TASKS_PATH ?? join(PROJECT_ROOT, 'data', 'tasks.json')),

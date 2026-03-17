@@ -139,7 +139,6 @@ pm2 startup   # 按提示执行以设置开机自启
 | `HMAC_SECRET` | ✅ | visitorId HMAC 签名密钥（≥32字符） |
 | `COOKIE_SECRET` | ✅ | cookie 签名密钥 |
 | `OPENCLAW_BASE_URL` | | OpenClaw 地址（默认 `http://localhost:18789`） |
-| `OPENCLAW_AGENTS_DIR` | | Agent 配置目录（默认 openclaw.json 同级的 `agents/`） |
 | `BASE_URL` | | 本服务公网地址（用于 CORS） |
 | `PORT` | | 监听端口（默认 `3000`） |
 | `REGISTRY_PATH` | | visitorId→agentId 映射文件（默认 `data/registry.json`） |

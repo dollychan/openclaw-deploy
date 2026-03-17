@@ -12,7 +12,6 @@
  */
 
 import { mkdir, copyFile, readdir } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { generateAgentId } from '../utils/idGen.js';
 import { updateConfig } from './configManager.js';
@@ -29,31 +28,22 @@ export async function provisionAgent(visitorId, cfg) {
   const workspacePath = resolve(join(cfg.openclawWorkspacesDir, agentId));
   const templateDir = resolve(cfg.templateDir);
 
-  const agentDir = join(cfg.openclawAgentsDir, agentId, 'agent');
-
   console.log(`[provisioner] Creating agent ${agentId} for visitor ${visitorId.slice(0, 12)}...`);
 
-  // ── 步骤 1：创建 workspace 和 agentDir 目录 ────────────────────────────────
+  // ── 步骤 1：创建 workspace 目录并复制人设文件 ─────────────────────────────
+  // 注意：agents/ 下的目录（models.json、sessions/）由 OpenClaw 在首次建立
+  // session 时自动创建，无需手动预创建。
   await mkdir(workspacePath, { recursive: true });
-  await mkdir(agentDir, { recursive: true });
-  await mkdir(join(cfg.openclawAgentsDir, agentId, 'sessions'), { recursive: true });
-
-  // 从 main agent 复制 models.json（包含 provider 配置）
-  const mainModelsJson = join(cfg.openclawAgentsDir, 'main', 'agent', 'models.json');
-  const visitorModelsJson = join(agentDir, 'models.json');
-  if (existsSync(mainModelsJson)) {
-    await copyFile(mainModelsJson, visitorModelsJson);
-  }
-
-  // ── 步骤 2：从模板目录复制人设文件 ────────────────────────────────────────
   await copyTemplateFiles(templateDir, workspacePath);
 
-  // ── 步骤 3：更新 openclaw.json（注册 Agent）──────────────────────────────
+  // ── 步骤 2：更新 openclaw.json（注册 Agent）──────────────────────────────
+  // 只设置 workspace，不设置 agentDir。
+  // agentDir 会导致 OpenClaw 以 agentDir 派生工作目录，
+  // 从而在 .openclaw/ 根目录创建 workspace-<agentId> 并写入错误位置。
   await updateConfig((config) => {
     config.agents.list.push({
       id: agentId,
       workspace: workspacePath,
-      agentDir,
       identity: {
         name: 'Assistant',
         emoji: '🤖',
@@ -64,7 +54,7 @@ export async function provisionAgent(visitorId, cfg) {
     });
   }, cfg.openclawConfigPath);
 
-  // ── 步骤 4：持久化 visitorId → agentId 映射 ───────────────────────────────
+  // ── 步骤 3：持久化 visitorId → agentId 映射 ───────────────────────────────
   // 放在最后：确保前面步骤全部成功后才写 registry
   // 若之前失败，registry 为空，下次请求会重新走完整 provision 流程（幂等）
   agentRegistry.set(visitorId, agentId, cfg.registryPath);

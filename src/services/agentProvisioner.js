@@ -26,24 +26,26 @@ import * as agentRegistry from './agentRegistry.js';
 export async function provisionAgent(visitorId, cfg) {
   const agentId = generateAgentId(cfg.agentIdPrefix);
   const workspacePath = resolve(join(cfg.openclawWorkspacesDir, agentId));
+  const agentDir = join(cfg.openclawAgentsDir, agentId, 'agent');
   const templateDir = resolve(cfg.templateDir);
 
   console.log(`[provisioner] Creating agent ${agentId} for visitor ${visitorId.slice(0, 12)}...`);
 
   // ── 步骤 1：创建 workspace 目录并复制人设文件 ─────────────────────────────
-  // 注意：agents/ 下的目录（models.json、sessions/）由 OpenClaw 在首次建立
-  // session 时自动创建，无需手动预创建。
+  // agentDir / sessions / models.json 由 OpenClaw 在首次建立 session 时自动创建，
+  // 无需手动预创建。
   await mkdir(workspacePath, { recursive: true });
   await copyTemplateFiles(templateDir, workspacePath);
 
   // ── 步骤 2：更新 openclaw.json（注册 Agent）──────────────────────────────
-  // 只设置 workspace，不设置 agentDir。
-  // agentDir 会导致 OpenClaw 以 agentDir 派生工作目录，
-  // 从而在 .openclaw/ 根目录创建 workspace-<agentId> 并写入错误位置。
+  // agentDir 必须写入配置：OpenClaw 依赖它确定 session 存储路径。
+  // 若不设置，OpenClaw 会 fallback 到 ~/.openclaw/workspace-<agentId>，
+  // 导致 session 写入错误位置。
   await updateConfig((config) => {
     config.agents.list.push({
       id: agentId,
       workspace: workspacePath,
+      agentDir,
       identity: {
         name: 'Assistant',
         emoji: '🤖',

@@ -11,9 +11,11 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import { loadConfig } from './src/config.js';
 import { load as loadRegistry } from './src/services/agentRegistry.js';
+import { load as loadTasks } from './src/services/taskManager.js';
 import { createVisitorAuth } from './src/middleware/visitorAuth.js';
 import { createSessionRouter } from './src/routes/session.js';
 import { createChatRouter } from './src/routes/chat.js';
+import { createTasksRouter } from './src/routes/tasks.js';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -30,6 +32,7 @@ try {
 
 // ── 从磁盘恢复 Agent 映射 ───────────────────────────────────────────────────
 await loadRegistry(cfg.registryPath);
+await loadTasks(cfg.tasksPath);
 
 // ── 创建 Express 应用 ────────────────────────────────────────────────────────
 const app = express();
@@ -85,6 +88,7 @@ app.use(express.static(join(__dirname, 'public'), {
 // ── API 路由 ──────────────────────────────────────────────────────────────────
 app.use('/api/session', createSessionRouter(cfg));
 app.use('/api/chat', createChatRouter(cfg));
+app.use('/api/tasks', createTasksRouter());
 
 // ── 健康检查 ──────────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => {

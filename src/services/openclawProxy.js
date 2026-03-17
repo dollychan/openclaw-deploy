@@ -39,8 +39,9 @@ export async function streamResponse({ agentId, visitorId, message, cfg, req, re
     // ── 构造请求到 OpenClaw /v1/responses ──────────────────────────────────
     const url = `${cfg.openclawBaseUrl}/v1/responses`;
 
-    // 使用 "web:{visitorId}" 作为稳定会话键，跨请求保持对话历史
-    const sessionKey = `web:${visitorId}`;
+    // 使用 visitorId 作为稳定会话键，跨请求保持对话历史
+    // 注意：避免使用 "web:" 等特殊前缀，防止 OpenClaw 将其识别为特殊路由
+    const sessionKey = `visitor-${visitorId}`;
 
     const body = JSON.stringify({
       model: `openclaw:${agentId}`,

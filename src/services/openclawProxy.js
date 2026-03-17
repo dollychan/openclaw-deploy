@@ -45,10 +45,8 @@ export async function streamResponse({ agentId, visitorId, message, cfg, req, re
     // ── 构造请求到 OpenClaw /v1/responses ──────────────────────────────────
     const url = `${cfg.openclawBaseUrl}/v1/responses`;
 
-    // session key 格式：agent:<agentId>:<visitorId>
-    // - multi 模式：agentId 每访客唯一，visitorId 作为 session name 区分会话
-    // - single 模式：agentId 共享，visitorId 提供 session 级对话隔离
-    const sessionKey = `agent:${agentId}:${visitorId}`;
+    // 使用 agent:<agentId>:main 格式，确保请求路由到 visitor agent 自己的 workspace
+    const sessionKey = `agent:${agentId}:main`;
 
     const body = JSON.stringify({
       model: `openclaw:${agentId}`,

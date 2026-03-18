@@ -108,137 +108,6 @@
     }
     #close-btn:hover { color: #fff; background: rgba(255,255,255,0.15); }
 
-    /* 任务按钮 */
-    #tasks-btn {
-      background: none;
-      border: none;
-      color: rgba(255,255,255,0.85);
-      cursor: pointer;
-      font-size: 16px;
-      line-height: 1;
-      padding: 4px 6px;
-      border-radius: 4px;
-    }
-    #tasks-btn:hover { color: #fff; background: rgba(255,255,255,0.15); }
-
-    /* 任务面板 */
-    #tasks-panel {
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      overflow: hidden;
-    }
-    #tasks-panel.hidden { display: none; }
-    #chat-area {
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      overflow: hidden;
-    }
-    #chat-area.hidden { display: none; }
-
-    /* 任务列表 */
-    #tasks-list {
-      flex: 1;
-      overflow-y: auto;
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .task-item {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      padding: 10px 12px;
-      display: flex;
-      align-items: flex-start;
-      gap: 8px;
-    }
-    .task-info { flex: 1; min-width: 0; }
-    .task-name { font-size: 13px; font-weight: 600; color: #0f172a; margin-bottom: 2px; }
-    .task-schedule { font-size: 11px; color: #94a3b8; font-family: monospace; }
-    .task-message { font-size: 12px; color: #64748b; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .task-delete {
-      background: none;
-      border: none;
-      color: #cbd5e1;
-      cursor: pointer;
-      font-size: 16px;
-      padding: 0 2px;
-      flex-shrink: 0;
-      line-height: 1;
-    }
-    .task-delete:hover { color: #ef4444; }
-    .tasks-empty { text-align: center; color: #94a3b8; font-size: 13px; padding: 24px 0; }
-
-    /* 任务 enable 切换 */
-    .task-toggle {
-      position: relative;
-      width: 34px;
-      height: 20px;
-      flex-shrink: 0;
-      cursor: pointer;
-    }
-    .task-toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
-    .task-toggle-track {
-      position: absolute;
-      inset: 0;
-      background: #e2e8f0;
-      border-radius: 20px;
-      transition: background 0.2s;
-    }
-    .task-toggle input:checked ~ .task-toggle-track { background: ${themeColor}; }
-    .task-toggle-thumb {
-      position: absolute;
-      top: 3px;
-      left: 3px;
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: #fff;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-      transition: transform 0.2s;
-    }
-    .task-toggle input:checked ~ .task-toggle-thumb { transform: translateX(14px); }
-    .task-toggle input:disabled ~ .task-toggle-track { opacity: 0.4; cursor: not-allowed; }
-
-    /* 新建任务表单 */
-    #task-form {
-      border-top: 1px solid #e2e8f0;
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      background: #fff;
-      flex-shrink: 0;
-    }
-    #task-form input, #task-form textarea {
-      border: 1.5px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 7px 10px;
-      font-size: 13px;
-      font-family: inherit;
-      outline: none;
-      color: #1e293b;
-      resize: none;
-    }
-    #task-form input:focus, #task-form textarea:focus { border-color: ${themeColor}; }
-    #task-form textarea { min-height: 52px; }
-    #task-submit {
-      background: ${themeColor};
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      padding: 7px;
-      font-size: 13px;
-      cursor: pointer;
-      font-weight: 500;
-    }
-    #task-submit:hover { opacity: 0.88; }
-    #task-submit:disabled { opacity: 0.4; cursor: not-allowed; }
-    .task-form-hint { font-size: 11px; color: #94a3b8; }
-
     /* 消息列表 */
     #messages {
       flex: 1;
@@ -351,29 +220,14 @@
     <div id="panel" class="hidden" role="dialog">
       <div id="header">
         <span id="header-title"></span>
-        <div style="display:flex;gap:2px">
-          <button id="tasks-btn" aria-label="Scheduled tasks" title="Scheduled tasks">⏰</button>
-          <button id="close-btn" aria-label="Close chat">×</button>
-        </div>
+        <button id="close-btn" aria-label="Close chat">×</button>
       </div>
-      <div id="chat-area">
-        <div id="messages" role="log" aria-live="polite"></div>
-        <div id="input-row">
-          <textarea id="input" rows="1" aria-label="Message input"></textarea>
-          <button id="send-btn" aria-label="Send message">
-            <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-          </button>
-        </div>
-      </div>
-      <div id="tasks-panel" class="hidden">
-        <div id="tasks-list"></div>
-        <div id="task-form">
-          <input id="task-name" type="text" placeholder="Task name" maxlength="100" />
-          <input id="task-schedule" type="text" placeholder="Cron expression (e.g. 0 9 * * *)" maxlength="50" />
-          <span class="task-form-hint">minute hour day month weekday</span>
-          <textarea id="task-message" placeholder="Message to send to agent" maxlength="500"></textarea>
-          <button id="task-submit">Add Task</button>
-        </div>
+      <div id="messages" role="log" aria-live="polite"></div>
+      <div id="input-row">
+        <textarea id="input" rows="1" aria-label="Message input"></textarea>
+        <button id="send-btn" aria-label="Send message">
+          <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
       </div>
     </div>
   `;
@@ -390,19 +244,11 @@
   const messagesEl = shadow.getElementById('messages');
   const input = shadow.getElementById('input');
   const sendBtn = shadow.getElementById('send-btn');
-  const tasksBtn = shadow.getElementById('tasks-btn');
-  const chatArea = shadow.getElementById('chat-area');
-  const tasksPanel = shadow.getElementById('tasks-panel');
-  const tasksList = shadow.getElementById('tasks-list');
-  const taskName = shadow.getElementById('task-name');
-  const taskSchedule = shadow.getElementById('task-schedule');
-  const taskMessage = shadow.getElementById('task-message');
-  const taskSubmit = shadow.getElementById('task-submit');
+
   // ── 状态 ────────────────────────────────────────────────────────────────────
   let isOpen = false;
   let isSending = false;
   let isInitialized = false;
-  let showingTasks = false;
 
   // ── 面板开关 ────────────────────────────────────────────────────────────────
   function togglePanel() {
@@ -416,144 +262,13 @@
 
   bubble.addEventListener('click', togglePanel);
   closeBtn.addEventListener('click', togglePanel);
-  tasksBtn.addEventListener('click', toggleTasks);
-
-  // ── 任务面板切换 ────────────────────────────────────────────────────────────
-  function toggleTasks() {
-    showingTasks = !showingTasks;
-    chatArea.classList.toggle('hidden', showingTasks);
-    tasksPanel.classList.toggle('hidden', !showingTasks);
-    tasksBtn.style.background = showingTasks ? 'rgba(255,255,255,0.2)' : '';
-    if (showingTasks) loadTasks();
-  }
-
-  // ── 加载并渲染任务列表 ─────────────────────────────────────────────────────
-  async function loadTasks() {
-    try {
-      const res = await fetch(`${apiBase}/api/tasks`, { credentials: 'include' });
-      if (!res.ok) return;
-      const { tasks } = await res.json();
-      renderTasks(tasks);
-    } catch { /* ignore */ }
-  }
-
-  function renderTasks(tasks) {
-    tasksList.innerHTML = '';
-    if (tasks.length === 0) {
-      tasksList.innerHTML = '<div class="tasks-empty">No scheduled tasks yet</div>';
-      return;
-    }
-    for (const task of tasks) {
-      const el = document.createElement('div');
-      el.className = 'task-item';
-
-      // task info
-      const info = document.createElement('div');
-      info.className = 'task-info';
-      const nameEl = document.createElement('div');
-      nameEl.className = 'task-name';
-      nameEl.textContent = task.name;
-      const schedEl = document.createElement('div');
-      schedEl.className = 'task-schedule';
-      schedEl.textContent = task.schedule;
-      const msgEl = document.createElement('div');
-      msgEl.className = 'task-message';
-      msgEl.textContent = task.message;
-      info.appendChild(nameEl);
-      info.appendChild(schedEl);
-      info.appendChild(msgEl);
-
-      // toggle switch — all attributes set via DOM API (no innerHTML interpolation)
-      const label = document.createElement('label');
-      label.className = 'task-toggle';
-      label.title = task.enabled ? 'Disable task' : 'Enable task (requires Feishu)';
-      const checkbox = document.createElement('input');
-      checkbox.type = 'checkbox';
-      checkbox.checked = task.enabled;
-      // disable the toggle when Feishu is not connected and task is not yet enabled
-      checkbox.disabled = false;
-      checkbox.addEventListener('change', (e) => toggleTask(task.id, e.target.checked));
-      const track = document.createElement('span');
-      track.className = 'task-toggle-track';
-      const thumb = document.createElement('span');
-      thumb.className = 'task-toggle-thumb';
-      label.appendChild(checkbox);
-      label.appendChild(track);
-      label.appendChild(thumb);
-
-      // delete button
-      const delBtn = document.createElement('button');
-      delBtn.className = 'task-delete';
-      delBtn.setAttribute('aria-label', 'Delete task');
-      delBtn.textContent = '×';
-      delBtn.addEventListener('click', () => deleteTask(task.id));
-
-      el.appendChild(info);
-      el.appendChild(label);
-      el.appendChild(delBtn);
-      tasksList.appendChild(el);
-    }
-  }
-
-  async function toggleTask(taskId, enable) {
-    try {
-      const res = await fetch(`${apiBase}/api/tasks/${taskId}/${enable ? 'enable' : 'disable'}`, {
-        method: 'POST',
-        credentials: 'include',
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        alert(data.error || `Failed to ${enable ? 'enable' : 'disable'} task`);
-      }
-      loadTasks();
-    } catch { loadTasks(); }
-  }
-
-  async function deleteTask(taskId) {
-    try {
-      const res = await fetch(`${apiBase}/api/tasks/${taskId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-      if (res.ok) loadTasks();
-    } catch { /* ignore */ }
-  }
-
-  // ── 创建任务 ────────────────────────────────────────────────────────────────
-  taskSubmit.addEventListener('click', async () => {
-    const name = taskName.value.trim();
-    const schedule = taskSchedule.value.trim();
-    const message = taskMessage.value.trim();
-
-    if (!name || !schedule || !message) return;
-
-    taskSubmit.disabled = true;
-    try {
-      const res = await fetch(`${apiBase}/api/tasks`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ name, schedule, message }),
-      });
-      if (res.ok) {
-        taskName.value = '';
-        taskSchedule.value = '';
-        taskMessage.value = '';
-        loadTasks();
-      } else {
-        const data = await res.json().catch(() => ({}));
-        alert(data.error || 'Failed to create task');
-      }
-    } catch { /* ignore */ } finally {
-      taskSubmit.disabled = false;
-    }
-  });
 
   // ── 初始化：调用 /api/session 建立 cookie ─────────────────────────────────
   async function init() {
     isInitialized = true;
     try {
       await fetch(`${apiBase}/api/session`, { credentials: 'include' });
+      // 展示欢迎语
       appendMessage('assistant', welcomeMsg);
     } catch {
       appendMessage('error', 'Unable to connect to assistant. Please refresh the page.');
